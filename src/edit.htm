@@ -333,33 +333,45 @@ function createTree(element, editor){
     el.appendChild(list);
     var action = ce("li");
     list.appendChild(action);
-    if(isImageFile(path)){
-      action.innerHTML = "<span>Preview</span>";
-      action.onclick = function(e){
-        loadPreview(path);
+    
+    if (path.slice(0,1) === '[') {
+      let dirFile = ce("li");
+      list.appendChild(dirFile);
+      dirFile.innerHTML = "<span>Open directory</span>";
+      let me = this;
+      dirFile.onclick = function(e){
+        me.refreshPath(path.slice(1,-1));
         if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
       };
-    } else if(isTextFile(path)){
-      action.innerHTML = "<span>Edit</span>";
-      action.onclick = function(e){
-        editor.loadUrl(path);
+    } else {
+      if(isImageFile(path)){
+        action.innerHTML = "<span>Preview</span>";
+        action.onclick = function(e){
+          loadPreview(path);
+          if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
+        };
+      } else if(isTextFile(path)){
+        action.innerHTML = "<span>Edit</span>";
+        action.onclick = function(e){
+          editor.loadUrl(path);
+          if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
+        };
+      }    
+      var download = ce("li");
+      list.appendChild(download);
+      download.innerHTML = "<span>Download</span>";
+      download.onclick = function(e){
+        loadDownload(path);
+        if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
+      };
+      var delFile = ce("li");
+      list.appendChild(delFile);
+      delFile.innerHTML = "<span>Delete</span>";
+      delFile.onclick = function(e){
+        httpDelete(path);
         if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
       };
     }
-    var download = ce("li");
-    list.appendChild(download);
-    download.innerHTML = "<span>Download</span>";
-    download.onclick = function(e){
-      loadDownload(path);
-      if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
-    };
-    var delFile = ce("li");
-    list.appendChild(delFile);
-    delFile.innerHTML = "<span>Delete</span>";
-    delFile.onclick = function(e){
-      httpDelete(path);
-      if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
-    };
   }
 
   function showContextMenu(event, path, isfile){
@@ -412,6 +424,8 @@ function createTree(element, editor){
     for(var i = 0; i < ll; i++){
       if(items[i].type === "file")
         list.appendChild(createTreeLeaf(path, items[i].name, items[i].size));
+      if(items[i].type === "dir")
+        list.appendChild(createTreeLeaf(path, "[" + items[i].name + "]", items[i].size));
     }
 
   }
@@ -457,8 +471,8 @@ function createTree(element, editor){
   }
 
   this.refreshPath = function(path){
-    treeRoot.removeChild(treeRoot.childNodes[0]);
-    httpGet(treeRoot, "/");
+	if (treeRoot.childNodes[0]!=undefined) treeRoot.removeChild(treeRoot.childNodes[0]);
+    httpGet(treeRoot, path);
   };
 
   function delCb(path){
@@ -481,12 +495,16 @@ function createTree(element, editor){
   function getCb(parent, path){
     return function(status, responseText){
       if(status == 200)
+        try {
         addList(parent, path, JSON.parse(responseText));
+        } catch (error) {
+
+        }
     }
   }
 
   function httpGet(parent, path){
-    requests.add("GET", "/edit", { list: path }, getCb(parent, path));
+   requests.add("GET", "/edit", { list: path }, getCb(parent, path));
   }
 
   httpGet(treeRoot, "/");
@@ -596,11 +614,13 @@ function createEditor(element, file, lang, theme, type){
   };
   return editor;
 }
+
+var tree;
 function onBodyLoad(){
   var vars = {};
   var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) { vars[key] = value; });
   var editor = createEditor("editor", vars.file, vars.lang, vars.theme);
-  var tree = createTree("tree", editor);
+  tree = createTree("tree", editor);
   createFileUploader("uploader", tree, editor);
   if(typeof vars.file === "undefined") vars.file = "/index.htm";
   editor.loadUrl(vars.file);
