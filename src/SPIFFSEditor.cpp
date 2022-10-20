@@ -482,11 +482,10 @@ void SPIFFSEditor::handleRequest(AsyncWebServerRequest *request){
         }
         if (output != "[") output += ',';
         output += "{\"type\":\"";
-        if (dir.isFile()) {
-          output += "file";
-        }
         if (dir.isDirectory()) {
            output += "dir";
+        } else {
+           output += "file";
         }
         output += "\",\"name\":\"";
         #ifdef ESP32
