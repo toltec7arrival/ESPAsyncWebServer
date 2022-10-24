@@ -350,7 +350,7 @@ function createTree(element, editor){
           loadPreview(path);
           if(document.body.getElementsByClassName('cm').length > 0) document.body.removeChild(el);
         };
-      } else if(isTextFile(path)){
+      } else {
         action.innerHTML = "<span>Edit</span>";
         action.onclick = function(e){
           editor.loadUrl(path);
