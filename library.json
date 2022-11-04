@@ -24,9 +24,8 @@
       "platforms": "espressif8266"
     },
     {
-      "owner": "me-no-dev",      
       "name": "AsyncTCP",
-      "version": "^1.1.1",
+      "version": "https://github.com/toltec7arrival/AsyncTCP.git#master",
       "platforms": "espressif32"
     },
     {
